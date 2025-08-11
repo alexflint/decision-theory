@@ -1,0 +1,35 @@
+# Setup python and run the main program
+
+name: Python
+
+on: [push]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.12', '3.13']
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Newcomb
+      env:
+        PYTHONPATH: .
+      run: |
+        python main.py CDT newcomb --verbose
+        python main.py EDT newcomb --verbose
+        python main.py FDT newcomb --verbose
