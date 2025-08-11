@@ -7,7 +7,7 @@ import inference
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("decision_theory", choices=["EDT", "CDT", "FDT"])
-    parser.add_argument("decision_problem", choices="newcomb")
+    parser.add_argument("decision_problem", choices=["newcomb"])
     parser.add_argument("--verbose", action="store_true", default=False)
     args = parser.parse_args()
 
