@@ -58,6 +58,15 @@ class Factor(object):
             lambda consequence, *causes: float(consequence == f(*causes))
         )
 
+    @classmethod
+    def curry(cls, factor, **values):
+        """
+        Create a factor that wraps another factor and always sets the nodes named in the
+        keys of VALUES to their repsective values.
+        """
+        raise Exception("TODO")
+
+
 class FactorGraph(object):
     """
     A factor graph is a list of node names, together with the possible values for each
@@ -83,3 +92,15 @@ class FactorGraph(object):
             probability *= factor(*node_values)
         return probability
 
+
+def conditionalize(world_model, **values):
+    """
+    Given a factor graph, create a new factor graph representing a conditional distribution.
+    Values is a map from nodes to values. These are the nodes that the new factor graph is
+    conditioned on, and their respective values. Note that we eliminate the conditioned
+    nodes entirely from the new factor graph. When the evaluate() member is called on the
+    new factor graph, the probabilities returned are always conditioned on the respective
+    values.
+    """
+    # TODO: curry each factor in world_model on VALUES; remove the nodes in VALUES from the
+    # list of nodes

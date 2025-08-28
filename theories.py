@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from factor import Factor, FactorGraph
+from factorgraph import Factor, FactorGraph
 
 
 def evidential_decision_theory(world_model, physical_identity, logical_identity):

@@ -1,4 +1,4 @@
-from factor import Factor, FactorGraph
+from factorgraph import Factor, FactorGraph
 
 # This file sets up a number of common decision problems as factor graphs.
 
