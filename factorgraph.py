@@ -21,6 +21,10 @@ class Factor(object):
     that those outputs sum to 1 over the possible values of the consequence node.
     """
     def __init__(self, consequence: str, causes: list[str], conditional: Callable[..., float]):
+        if not isinstance(causes, list):
+            raise Exception(f"Factor constructed with causes={causes}, expected list of strings")
+        if not all(isinstance(cause, str) for cause in causes):
+            raise Exception(f"Factor constructed with causes={causes}, expected list of strings")
         self.consequence = consequence
         self.causes = causes
         self.conditional = conditional
@@ -34,6 +38,14 @@ class Factor(object):
         Create a factor that assigns a uniform probability to a certain node
         """
         return Factor(node_name, [], lambda _: probability)
+
+    @classmethod
+    def uniform_function_of(cls, consequence, causes, probability):
+        """
+        Create a factor that assigns a uniform probability to a certain node,
+        and indicates that a certain other node is an input
+        """
+        return Factor(consequence, causes, lambda *args: probability)
 
     @classmethod
     def identical(cls, consequence, cause):

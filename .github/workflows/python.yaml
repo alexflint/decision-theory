@@ -32,4 +32,18 @@ jobs:
       run: |
         python main.py CDT newcomb --verbose
         python main.py EDT newcomb --verbose
-        python main.py FDT newcomb --verbose
+        python main.py TDT newcomb --verbose
+        python main.py UDT1.1 newcomb --verbose
+
+    - name: Red Room Blue Room
+      env:
+        PYTHONPATH: .
+      run: |
+        python main.py CDT redroom
+        python main.py CDT blueroom
+        python main.py EDT redroom
+        python main.py EDT blueroom
+        python main.py TDT redroom
+        python main.py TDT blueroom
+        python main.py UDT1.1 redroom
+        python main.py UDT1.1 blueroom
