@@ -110,15 +110,13 @@ class FactorGraph(object):
         """
         import graphviz
         dot = graphviz.Digraph()
-        for node in self.nodes:
-            dot.node(node)
+        for node, values in self.nodes.items():
+            dot.node(node,f"<<b>{node}</b><font point-size=\"10\">{''.join(f'<br/>{v}' for v in values)}</font>>")
         for factor in self.factors:
             for cause in factor.causes:
                 dot.edge(cause, factor.consequence)
         kwargs.setdefault("directory", "out")
         dot.view(*args, **kwargs)
-if __name__ == "__main__":
-    FactorGraph({'A':None,'B':None},[Factor('B',['A'],None)]).view()
 
 def conditionalize(world_model, **values):
     """
