@@ -103,7 +103,22 @@ class FactorGraph(object):
             node_values = [world[n] for n in node_names]
             probability *= factor(*node_values)
         return probability
-
+    
+    def view(self, *args, **kwargs):
+        """
+        Render and open a .pdf of self in out/ using graphviz.
+        """
+        import graphviz
+        dot = graphviz.Digraph()
+        for node in self.nodes:
+            dot.node(node)
+        for factor in self.factors:
+            for cause in factor.causes:
+                dot.edge(cause, factor.consequence)
+        kwargs.setdefault("directory", "out")
+        dot.view(*args, **kwargs)
+if __name__ == "__main__":
+    FactorGraph({'A':None,'B':None},[Factor('B',['A'],None)]).view()
 
 def conditionalize(world_model, **values):
     """
