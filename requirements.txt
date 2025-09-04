@@ -1,0 +1,3 @@
+graphviz # These are just bindings to an external program, which you also need to install. Try running: apt install graphviz
+pillow # for raw image manipulation
+numpy # just for pillow plumbing ^^;
