@@ -119,7 +119,7 @@ class FactorGraph(object):
                     import numpy as np
                     from PIL import Image
                     probs = np.array([[factor.conditional(y,x) for y in self.nodes[factor.consequence]] for x in self.nodes[factor.causes[0]]])
-                    normed = ((probs - probs.min()) / (probs.max() - probs.min()) * 255).astype(np.uint8)
+                    normed = (probs / probs.max() * 255).astype(np.uint8)
                     filename=f'{kwargs.get("filename")}_{factor.consequence}_{factor.causes[0]}.png'
                     Image.fromarray(normed).resize((40,40),resample=Image.NEAREST).save(f"out/{filename}")
                     edgeattrs["label"] = f'<<TABLE border="0" cellspacing="0"><TR><TD><IMG SRC="{filename}"/></TD></TR></TABLE>>'

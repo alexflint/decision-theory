@@ -9,6 +9,8 @@ def main():
     parser.add_argument("decision_theory", choices=["EDT", "CDT", "TDT", "UDT1.1"])
     parser.add_argument("decision_problem", choices=["newcomb", "redroom", "blueroom"])
     parser.add_argument("--verbose", action="store_true", default=False)
+    parser.add_argument("--initial_verbose", action="store_true", default=False)
+    parser.add_argument("--modified_verbose", action="store_true", default=False)
     args = parser.parse_args()
 
     if args.decision_theory.upper() == "EDT":
@@ -33,8 +35,15 @@ def main():
         print(f"unknown decision theory: {args.decision_theory}")
         return
 
-    if args.verbose:
+    if args.initial_verbose:
         world_model.view(filename="Initial")
+    if args.verbose:
+        print(f"INITIAL NODES:")
+        for node, values in world_model.nodes.items():
+            print(f"  {node:20s} ∊ {values}")
+        print(f"INITIAL FACTORS:")
+        for factor in world_model.factors:
+            print(f"  {factor.consequence:20s} <= {factor.causes}")
 
     # use the decision theory to perform surgery to get a factor graph where our
     # decision can be taken by maximizing expected utility coniditioned on a single
@@ -42,8 +51,15 @@ def main():
     # in modified_model
     modified_model, intervention_node, output_formatter = theory(world_model, observations, physical_identity, logical_identity)
 
-    if args.verbose:
+    if args.modified_verbose:
         modified_model.view(filename="Modified")
+    if args.verbose:
+        print(f"MODIFIED NODES:")
+        for node, values in modified_model.nodes.items():
+            print(f"  {node:20s} ∊ {values}")
+        print(f"MODIFIED FACTORS:")
+        for factor in modified_model.factors:
+            print(f"  {factor.consequence:20s} <= {factor.causes}")
 
     # go through each possible value of the intervention node and compute an expected utility
     expected_utilities = {}
