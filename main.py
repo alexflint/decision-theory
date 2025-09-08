@@ -9,6 +9,8 @@ def main():
     parser.add_argument("decision_theory", choices=["EDT", "CDT", "TDT", "UDT1.1", "RDT"])
     parser.add_argument("decision_problem", choices=["newcomb", "redroom", "blueroom"])
     parser.add_argument("--verbose", action="store_true", default=False)
+    parser.add_argument("--initial_verbose", action="store_true", default=False)
+    parser.add_argument("--modified_verbose", action="store_true", default=False)
     args = parser.parse_args()
 
     if args.decision_theory.upper() == "EDT":
@@ -35,6 +37,8 @@ def main():
         print(f"unknown decision theory: {args.decision_theory}")
         return
 
+    if args.initial_verbose:
+        world_model.view(filename="Initial")
     if args.verbose:
         print(f"INITIAL NODES:")
         for node, values in world_model.nodes.items():
@@ -49,6 +53,8 @@ def main():
     # in modified_model
     modified_model, intervention_node, output_formatter = theory(world_model, observations, utility_node, physical_identity, logical_identity)
 
+    if args.modified_verbose:
+        modified_model.view(filename="Modified")
     if args.verbose:
         print(f"MODIFIED NODES:")
         for node, values in modified_model.nodes.items():
