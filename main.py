@@ -6,7 +6,7 @@ import inference
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("decision_theory", choices=["EDT", "CDT", "TDT", "UDT1.1"])
+    parser.add_argument("decision_theory", choices=["EDT", "CDT", "TDT", "UDT1.1", "RDT"])
     parser.add_argument("decision_problem", choices=["newcomb", "redroom", "blueroom"])
     parser.add_argument("--verbose", action="store_true", default=False)
     args = parser.parse_args()
@@ -19,6 +19,8 @@ def main():
         theory = theories.timeless_decision_theory
     elif args.decision_theory.upper() == "UDT1.1":
         theory = theories.updateless_decision_theory_11
+    elif args.decision_theory.upper() == "RDT":
+        theory = theories.recursive_decision_theory
     else:
         print(f"unknown decision theory: {args.decision_theory}")
         return
@@ -45,7 +47,7 @@ def main():
     # decision can be taken by maximizing expected utility coniditioned on a single
     # "intervention" node. In the below, this intervention node is the name of a node
     # in modified_model
-    modified_model, intervention_node, output_formatter = theory(world_model, observations, physical_identity, logical_identity)
+    modified_model, intervention_node, output_formatter = theory(world_model, observations, utility_node, physical_identity, logical_identity)
 
     if args.verbose:
         print(f"MODIFIED NODES:")
@@ -67,6 +69,7 @@ def main():
     output = max(expected_utilities.keys(), key=lambda node_name: expected_utilities[node_name])
     if args.verbose:
         print(output)
+
     print(output_formatter(output))
 
 

@@ -3,9 +3,10 @@ import collections
 from copy import deepcopy
 
 from factorgraph import Factor, FactorGraph
+import decide
 
 
-def evidential_decision_theory(world_model, observations, physical_identity, logical_identity):
+def evidential_decision_theory(world_model, observations, utility_node, physical_identity, logical_identity):
     """
     In evidential decision theory we make no changes to the world model, and directly
     conidition on the physical_identity node. This makes EDT incredibly trivial to
@@ -14,7 +15,7 @@ def evidential_decision_theory(world_model, observations, physical_identity, log
     return world_model, physical_identity, lambda output: output
 
 
-def causal_decision_theory(world_model, observations, physical_identity, logical_identity):
+def causal_decision_theory(world_model, observations, utility_node, physical_identity, logical_identity):
     """
     In causal decision theory we do a surgery in which we drop all factors with the physical_identity
     as a consequence, and then condition on the physical_identity node.
@@ -23,8 +24,7 @@ def causal_decision_theory(world_model, observations, physical_identity, logical
     return FactorGraph(world_model.nodes, modified_factors), physical_identity, lambda output: output
 
 
-
-def timeless_decision_theory(world_model, observations, physical_identity, logical_identity):
+def timeless_decision_theory(world_model, observations, utility_node, physical_identity, logical_identity):
     """
     In timeless decision theory we do a surgery in which we drop all factors with any logical_identity
     node as a consequence, then add a new node with each logical_identity node as a deterministic consequence
@@ -47,7 +47,7 @@ def timeless_decision_theory(world_model, observations, physical_identity, logic
     return FactorGraph(modified_nodes, modified_factors), "output of my decision algorithm", lambda output: output
 
 
-def updateless_decision_theory_11(world_model, observations, physical_identity, logical_identity):
+def updateless_decision_theory_11(world_model, observations, utility_node, physical_identity, logical_identity):
     """
     In updateless decision theory 1.1 we add a policy node representing our action as a function of
     each possible input. The space of possible inputs is determined by the set of nodes that
@@ -108,3 +108,74 @@ def updateless_decision_theory_11(world_model, observations, physical_identity, 
 
     # return the modified factor graph, using the new policy node as the intervention node
     return FactorGraph(modified_nodes, modified_factors), "my policy", output_formatter
+
+
+def recursive_decision_theory(world_model, observations, utility_node, physical_identity, logical_identity):
+    """
+    Naive functional decision theory implements FDT by calling itself recursively for each
+    possible counterfactual world, and using the result to put a prior on the node
+    representing its own output in each of those counterfactual worlds. This leads to an
+    infinite recursion, as each of the counterfactual decisions performs the same thing from
+    the perspective of that counterfactual world.
+
+    Here, a counterfactual means each possible value of the nodes that are immediate causes
+    of any of the nodes in logical_identity. It is assumed that each logical identity node
+    has the same "type signature", meaning that the cartesian product of the possible values
+    of the immediate causes is the same for each of the logical identity nodes.
+    """
+
+    # work out our own type signature by making a list of nodes that are used as inputs
+    inputs_by_logical_identity = collections.defaultdict(list)
+    for factor in world_model.factors:
+        if factor.consequence in logical_identity:
+            inputs_by_logical_identity[factor.consequence].extend(factor.causes)
+
+    # our output space is represented directly in the world model
+    output_space = world_model.nodes[logical_identity[0]]
+
+    # now construct the cartesian product over the possible values of all the input nodes to get the space of inputs
+    input_nodes = inputs_by_logical_identity[logical_identity[0]]
+    input_values = [world_model.nodes[node] for node in input_nodes]
+    input_space = list(itertools.product(*input_values))
+
+    # add nodes for each possible world: this includes the "actual" world as well as all counterfactuals
+    added_nodes = []
+    modified_nodes = deepcopy(world_model.nodes)
+    for inputs in input_space:
+        node_name = f"my decision given {inputs}"
+        added_nodes.append(node_name)
+        modified_nodes[node_name] = output_space
+
+    # remove factors that have any logical_identity node as a consequence
+    modified_factors = [factor for factor in world_model.factors if factor.consequence not in logical_identity]
+
+    # define a function that looks up the value of one of the self-referential nodes, given
+    # a tuple of concrete inputs
+    def lookup_logical_output_given_inputs(logical_outputs, inputs):
+        node_name = f"my decision given {inputs}"
+        index = added_nodes.index(node_name)
+        return logical_outputs[index]
+
+    # add a factor that makes each logical_identity node a function of its original inputs plus each of the added nodes
+    for node_name in logical_identity:
+        original_causes = inputs_by_logical_identity[node_name]
+        modified_causes = added_nodes + original_causes
+        modified_factors.append(Factor.deterministic(
+            node_name,
+            modified_causes,
+            lambda *args: lookup_logical_output_given_inputs(args[:len(added_nodes)], args[len(added_nodes):])))
+
+    # work out which of the added nodes corresponds to the "actual" world: this should match one of the
+    # nodes added above
+    observed_inputs = tuple(observations[node] for node in input_nodes)
+    node_name_for_observed_inputs = f"my decision given {observed_inputs}"
+
+    # add a prior for each of the counterfactual logical outputs based on calling ourself
+    for inputs in input_space:
+        if inputs != observed_inputs:
+            counterfactual_node_name = f"my decision given {inputs}"
+            counterfactual_output = decide.decide(recursive_decision_theory, world_model, observations, utility_node,  physical_identity, logical_identity)
+            modified_factors.append(Factor.indicator(counterfactual_node_name, counterfactual_output))
+
+    # return the modified factor graph, using the new policy node as the intervention node
+    return FactorGraph(modified_nodes, modified_factors), node_name_for_observed_inputs, lambda output: output

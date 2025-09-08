@@ -35,9 +35,16 @@ class Factor(object):
     @classmethod
     def uniform(cls, node_name, probability):
         """
-        Create a factor that assigns a uniform probability to a certain node
+        Create a factor that assigns a uniform probability distribution to a certain node
         """
         return Factor(node_name, [], lambda _: probability)
+
+    @classmethod
+    def indicator(cls, node_name, value):
+        """
+        Create a factor that assigns 100% probability to a certain value of a certain node
+        """
+        return Factor(node_name, [], lambda x: float(x == value))
 
     @classmethod
     def uniform_function_of(cls, consequence, causes, probability):
