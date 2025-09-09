@@ -1,4 +1,5 @@
-import inference
+import pandas as pd
+import itertools
 
 def decide(theory, world_model, observations, utility_node, physical_identity, logical_identity, args=None):
     if args and args.initial_verbose:
@@ -27,12 +28,18 @@ def decide(theory, world_model, observations, utility_node, physical_identity, l
         for factor in modified_model.factors:
             print(f"  {factor.consequence:20s} <= {factor.causes}")
 
-    # go through each possible value of the intervention node and compute an expected utility
-    expected_utilities = {}
-    for intervention in modified_model.nodes[intervention_node]:
-        expectation = inference.expected_utility(modified_model, utility_node, intervention_node, intervention)
-        expected_utilities[intervention] = expectation
-
+    worlds = pd.DataFrame(itertools.product(*modified_model.nodes.values()), columns=modified_model.nodes)
+    worlds['prob'] = worlds.apply(modified_model.evaluate, axis=1)
+    worlds = worlds[worlds['prob'] != 0]
+    if args and args.verbose:
+        print(worlds.sort_values(intervention_node))
+    expected_utilities = worlds.groupby(intervention_node).apply(
+        lambda group: (group[utility_node] * group.prob).sum() / group.prob.sum(),
+        include_groups=False)
+    if args and args.verbose:
+        for intervention, expectation in expected_utilities.items():
+            print(f"expected utility of {intervention} = {expectation}")
+    
     # pick the intervention with highest expected utility
-    output = max(expected_utilities.keys(), key=lambda node_name: expected_utilities[node_name])
+    output = expected_utilities.idxmax()
     return output, output_formatter(output)
